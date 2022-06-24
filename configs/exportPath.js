@@ -1,4 +1,7 @@
 // Add your local directory path here
-const exportPath = "";
+const exportPath = {
+    tradingLiquidity: "",
+    pendingWithdrawals: ""
+}
 
 module.exports = {exportPath};

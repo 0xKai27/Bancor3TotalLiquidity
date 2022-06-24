@@ -324,6 +324,71 @@ const tokenAddresses = [
         symbol: "NDX",
         address: "0x86772b1409b61c639EaAc9Ba0AcfBb6E238e5F83",
         decimals: 18
+    },
+    {
+        symbol: "FXS",
+        address: "0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0",
+        decimals: 18
+    },
+    {
+        symbol: "SHIBGF",
+        address: "0x505a84a03e382331A1Be487b632Cf357748b65d6",
+        decimals: 18
+    },
+    {
+        symbol: "DATA",
+        address: "0x8f693ca8D21b157107184d29D398A8D082b38b76",
+        decimals: 18
+    },
+    {
+        symbol: "WXT",
+        address: "0xa02120696c7B8fE16C09C749E4598819b2B0E915",
+        decimals: 18
+    },
+    {
+        symbol: "APW",
+        address: "0x4104b135DBC9609Fc1A9490E61369036497660c8",
+        decimals: 18
+    },
+    {
+        symbol: "rETH",
+        address: "0xae78736Cd615f374D3085123A210448E74Fc6393",
+        decimals: 18
+    },
+    {
+        symbol: "THALES",
+        address: "0x8947da500Eb47F82df21143D0C01A29862a8C3c5",
+        decimals: 18
+    },
+    {
+        symbol: "EWTB",
+        address: "0x178c820f862B14f316509ec36b13123DA19A6054",
+        decimals: 18
+    },
+    {
+        symbol: "RPL",
+        address: "0xD33526068D116cE69F19A9ee46F0bd304F21A51f",
+        decimals: 18
+    },
+    {
+        symbol: "wstETH",
+        address: "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0",
+        decimals: 18
+    },
+    {
+        symbol: "xSUSHI",
+        address: "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272",
+        decimals: 18
+    },
+    {
+        symbol: "DRC",
+        address: "0xa150Db9b1Fa65b44799d4dD949D922c0a33Ee606",
+        decimals: 0
+    },
+    {
+        symbol: "FARM",
+        address: "0xa0246c9032bC3A600820415aE600c6388619A14D",
+        decimals: 18
     }
 ]
 
