@@ -170,7 +170,7 @@ async function pendingWithdrawalsTokenAmounts() {
             withdrawalRequests[i].returnValues.reserveTokenAmount = processDecimals(withdrawalRequests[i].returnValues.reserveTokenAmount, withdrawalRequests[i].returnValues.pool);
         }
 
-        // Specify colun headers to export
+        // Specify column headers to export
         let fields = [
             {
                 label: "Block Hash",

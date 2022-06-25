@@ -1,1 +1,3 @@
 node_modules
+configs/web3.js
+configs/exportPath.js
