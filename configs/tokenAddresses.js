@@ -389,6 +389,11 @@ const tokenAddresses = [
         symbol: "FARM",
         address: "0xa0246c9032bC3A600820415aE600c6388619A14D",
         decimals: 18
+    },
+    {
+        symbol: "DYDX",
+        address: "0x92D6C1e31e14520e676a687F0a93788B716BEff5",
+        decimals: 18
     }
 ]
 

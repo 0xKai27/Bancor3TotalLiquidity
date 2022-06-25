@@ -70,6 +70,9 @@ async function getTotalLiquidity() {
             }
         }
 
+        // Uncomment the below if you want to generate the pending withdrawal contract pool token balances
+        // pendingWithdrawalsPoolTokenBalances();        
+
         // Process decimal points
         for (let i = 0; i < totalLiquidity.length; i++) {
             totalLiquidity[i].masterVaultBalances = processDecimals(totalLiquidity[i].masterVaultBalances, totalLiquidity[i].pool);
@@ -133,11 +136,34 @@ async function pendingWithdrawalsTokenAmounts() {
     console.log(`Lock Duration: ${lockDuration}`);
 
     try {
-        const withdrawalRequests = await PendingWithdrawals.getPastEvents("WithdrawalInitiated", {
+        let withdrawalRequests = await PendingWithdrawals.getPastEvents("WithdrawalInitiated", {
             fromBlock: "earliest",
             toBlock: "latest"
         })
 
+        // Remove completed/cancelled request from list
+        const cancelledWithdrawalRequests = await PendingWithdrawals.getPastEvents("WithdrawalCancelled", {
+            fromBlock: "earliest",
+            toBlock: "latest"
+        });
+        
+        for (let i = 0; i < cancelledWithdrawalRequests.length; i++) {
+            withdrawalRequests = withdrawalRequests.filter((request) => {
+                return request.returnValues.requestId != cancelledWithdrawalRequests[i].returnValues.requestId;
+            })
+        }
+        
+        const completedWithdrawalRequests = await PendingWithdrawals.getPastEvents("WithdrawalCompleted", {
+            fromBlock: "earliest",
+            toBlock: "latest"
+        });
+
+        for (let i = 0; i < completedWithdrawalRequests.length; i++) {
+            withdrawalRequests = withdrawalRequests.filter((request) => {
+                return request.returnValues.requestId != completedWithdrawalRequests[i].returnValues.requestId;
+            })
+        }
+        
         let tokenPendingWithdrawalAmounts = [];
 
         // Initialize tokens array with list of unique tokens
@@ -264,6 +290,8 @@ async function pendingWithdrawalsPoolTokenBalances() {
     let csv = json2csv(tokenBalances, fields);
     csv = replaceWithTokenSymbol(csv);
     exportCsv(csv, exportPath.poolTokenAmountsPendingWithdrawals); 
+
+    return tokenBalances;
 }
 
 // Get the pools
@@ -314,6 +342,6 @@ function exportCsv(csv, path) {
     })    
 }
 
-pendingWithdrawalsPoolTokenBalances();
+getTotalLiquidity();
 
 provider.engine.stop();
