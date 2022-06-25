@@ -210,6 +210,13 @@ async function pendingWithdrawalsTokenAmounts() {
     }
 }
 
+// Get the pools
+async function getPools() {
+    let pools = await PoolCollection.methods.pools().call();
+
+    return pools;
+}
+
 // Process the decimals
 function processDecimals(str, token) {
     for (let i = 0; i < tokenAddresses.length; i++) {
