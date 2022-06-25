@@ -1,4 +1,4 @@
-# Bancor3 Trading Liquidity Query
+# Bancor3 Total Liquidity Query
 
 This code base is meant to enable the user to query Bancor3 liquidity. User can configure their own Web3 provider and download path in the configs folder. The contract address can be configured in `contractInfo.js` if required.
 
