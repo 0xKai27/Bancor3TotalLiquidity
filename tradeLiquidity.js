@@ -3,7 +3,7 @@ const fs = require('fs');
 const Big = require('big.js');
 const ERC20ABI = require('erc-20-abi')
 
-const {PoolCollection, PendingWithdrawals} = require("./configs/contractInfo");
+const {PoolCollection, PendingWithdrawals, BancorNetworkInfo} = require("./configs/contractInfo");
 const {tokenAddresses} = require("./configs/tokenAddresses");
 const {web3, provider} = require("./configs/web3");
 const {exportPath} = require("./configs/exportPath");
@@ -40,14 +40,14 @@ async function getTotalLiquidity() {
                 }
             }
         }
+        
+        let totalLiquidity = [];
 
         // Get the token pending withdrawal amounts
         console.log("Getting pending withdrawal request amounts");
         let pendingWithdrawalsAmounts = await pendingWithdrawalsTokenAmounts();
 
         // Join the pending withdrawal amounts with the events object
-        let totalLiquidity = [];
-
         for (let i = 0; i < latestEvents.length; i++) {
             for (let j = 0; j < pendingWithdrawalsAmounts.length; j++) {
                 if (latestEvents[i].returnValues.pool == pendingWithdrawalsAmounts[j].pool) {
@@ -63,13 +63,29 @@ async function getTotalLiquidity() {
                     })
                 }
             }
-        }      
+        }
+        
+        // Get the pool trading liquidity
+        console.log("Getting pool trading liquidity");
+        let poolTradingLiquidity = await getPoolTradingLiquidity();
+
+        // Join the total liquidity with the pool trading liquidity
+        for (let i = 0; i < totalLiquidity.length; i++) {
+            for (let j = 0; j < poolTradingLiquidity.length; j++) {
+                if (totalLiquidity[i].pool == poolTradingLiquidity[j].pool) {
+                    totalLiquidity[i].bntTradingLiquidity = poolTradingLiquidity[j].bntTradingLiquidity,
+                    totalLiquidity[i].baseTokenTradingLiquidity = poolTradingLiquidity[j].baseTokenTradingLiquidity
+                }
+            }
+        }
 
         // Process decimal points
         for (let i = 0; i < totalLiquidity.length; i++) {
             totalLiquidity[i].masterVaultBalances = processDecimals(totalLiquidity[i].masterVaultBalances, totalLiquidity[i].pool);
             totalLiquidity[i].stakedBalance = processDecimals(totalLiquidity[i].stakedBalance, totalLiquidity[i].pool);
             totalLiquidity[i].poolTokenSupply = processDecimals(totalLiquidity[i].poolTokenSupply, totalLiquidity[i].pool);
+            totalLiquidity[i].bntTradingLiquidity = processDecimals(totalLiquidity[i].bntTradingLiquidity, "0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C"); //BNT address
+            totalLiquidity[i].baseTokenTradingLiquidity = processDecimals(totalLiquidity[i].baseTokenTradingLiquidity, totalLiquidity[i].pool);
             totalLiquidity[i].pendingWithdrawalsPoolTokenAmount = processDecimals(totalLiquidity[i].pendingWithdrawalsPoolTokenAmount, totalLiquidity[i].pool);
             totalLiquidity[i].pendingWithdrawalsReserveTokenAmount = processDecimals(totalLiquidity[i].pendingWithdrawalsReserveTokenAmount, totalLiquidity[i].pool);
         }
@@ -77,14 +93,14 @@ async function getTotalLiquidity() {
         console.log("Exporting total liquidity to CSV");
         // Specify column headers to export to CSV
         let fields = [
-            {
-                label: "Block Hash",
-                value: "blockHash"
-            },
-            {
-                label: "Block Number",
-                value: "blockNumber"
-            },
+            // {
+            //     label: "Block Hash",
+            //     value: "blockHash"
+            // },
+            // {
+            //     label: "Block Number",
+            //     value: "blockNumber"
+            // },
             {
                 label: "Pool",
                 value: "pool"
@@ -100,6 +116,14 @@ async function getTotalLiquidity() {
             {
                 label: "Pool Token Supply",
                 value: "poolTokenSupply"
+            },
+            {
+                label: "Pool BNT Trading Liquidity",
+                value: "bntTradingLiquidity"
+            },
+            {
+                label: "Pool Base Trading Liquidity",
+                value: "baseTokenTradingLiquidity"
             },
             {
                 label: "Pool Tokens Pending Withdrawals",
@@ -118,7 +142,7 @@ async function getTotalLiquidity() {
 
         // Uncomment the below if you want to generate the pending withdrawal contract pool token balances
         // console.log("Getting PendingWithdrawals contract balances");
-        // pendingWithdrawalsPoolTokenBalances();  
+        // await pendingWithdrawalsPoolTokenBalances();  
 
     } catch(err) {
         console.log(err)
@@ -287,6 +311,35 @@ async function pendingWithdrawalsPoolTokenBalances() {
     exportCsv(csv, exportPath.poolTokenAmountsPendingWithdrawals); 
 
     return tokenBalances;
+}
+
+// Get the bnt and base token trading liquidity
+async function getPoolTradingLiquidity() {
+    
+    try {
+        let tradingLiquidity = []
+
+        for (let i = 0; i < tokenAddresses.length; i++) {
+            if (tokenAddresses[i].symbol == "BNT") {
+                tradingLiquidity.push({
+                    pool: tokenAddresses[i].address,
+                    bntTradingLiquidity: "",
+                    baseTokenTradingLiquidity: ""
+                })
+            } else {
+                let poolLiquidity = await BancorNetworkInfo.methods.tradingLiquidity(tokenAddresses[i].address).call();
+                tradingLiquidity.push({
+                    pool: tokenAddresses[i].address,
+                    bntTradingLiquidity: poolLiquidity.bntTradingLiquidity,
+                    baseTokenTradingLiquidity: poolLiquidity.baseTokenTradingLiquidity
+                })
+            }
+        }
+
+        return tradingLiquidity;
+    } catch (err) {
+        console.log(err)
+    }
 }
 
 // Process the decimals
