@@ -9,17 +9,11 @@ const {web3, provider} = require("./configs/web3");
 const {exportPath} = require("./configs/exportPath");
 
 async function getTotalLiquidity() {
-    // Get the ETH account
-    const accounts = await web3.eth.getAccounts();
-    console.log(`Accounts: ${accounts[0]}`)
 
-    // Log the pool type to ensure connection success
-    const poolType = await PoolCollection.methods.poolType().call();
-    console.log(`Pool Type: ${poolType}`);
+    console.log("Getting Bancor3 total liquidity");
 
     try {
         let currentBlockNumber = await web3.eth.getBlockNumber();
-        console.log(`Block Number: ${currentBlockNumber}`)
         let startingBlock = currentBlockNumber - 172800*3 // 172800 blocks in a month, 15s block time
 
         const pastEvents = await PoolCollection.getPastEvents("TotalLiquidityUpdated", {
@@ -48,6 +42,7 @@ async function getTotalLiquidity() {
         }
 
         // Get the token pending withdrawal amounts
+        console.log("Getting pending withdrawal request amounts");
         let pendingWithdrawalsAmounts = await pendingWithdrawalsTokenAmounts();
 
         // Join the pending withdrawal amounts with the events object
@@ -68,10 +63,7 @@ async function getTotalLiquidity() {
                     })
                 }
             }
-        }
-
-        // Uncomment the below if you want to generate the pending withdrawal contract pool token balances
-        // pendingWithdrawalsPoolTokenBalances();        
+        }      
 
         // Process decimal points
         for (let i = 0; i < totalLiquidity.length; i++) {
@@ -82,6 +74,7 @@ async function getTotalLiquidity() {
             totalLiquidity[i].pendingWithdrawalsReserveTokenAmount = processDecimals(totalLiquidity[i].pendingWithdrawalsReserveTokenAmount, totalLiquidity[i].pool);
         }
 
+        console.log("Exporting total liquidity to CSV");
         // Specify column headers to export to CSV
         let fields = [
             {
@@ -123,6 +116,9 @@ async function getTotalLiquidity() {
         csv = replaceWithTokenSymbol(csv);
         exportCsv(csv, exportPath.tradingLiquidity);
 
+        // Uncomment the below if you want to generate the pending withdrawal contract pool token balances
+        // console.log("Getting PendingWithdrawals contract balances");
+        // pendingWithdrawalsPoolTokenBalances();  
 
     } catch(err) {
         console.log(err)
@@ -131,9 +127,6 @@ async function getTotalLiquidity() {
 
 // Get the total pending withdrawals amounts by token
 async function pendingWithdrawalsTokenAmounts() {
-    // Log the lock duration to ensure connection success
-    const lockDuration = await PendingWithdrawals.methods.lockDuration().call();
-    console.log(`Lock Duration: ${lockDuration}`);
 
     try {
         let withdrawalRequests = await PendingWithdrawals.getPastEvents("WithdrawalInitiated", {
@@ -146,7 +139,7 @@ async function pendingWithdrawalsTokenAmounts() {
             fromBlock: "earliest",
             toBlock: "latest"
         });
-        
+
         for (let i = 0; i < cancelledWithdrawalRequests.length; i++) {
             withdrawalRequests = withdrawalRequests.filter((request) => {
                 return request.returnValues.requestId != cancelledWithdrawalRequests[i].returnValues.requestId;
@@ -197,6 +190,7 @@ async function pendingWithdrawalsTokenAmounts() {
             withdrawalRequests[i].returnValues.reserveTokenAmount = processDecimals(withdrawalRequests[i].returnValues.reserveTokenAmount, withdrawalRequests[i].returnValues.pool);
         }
 
+        console.log("Exporting pending withdrawal requests to CSV");
         // Specify column headers to export
         let fields = [
             {
@@ -270,6 +264,7 @@ async function pendingWithdrawalsPoolTokenBalances() {
         tokenBalances[i].poolTokenBalance = processDecimals(tokenBalances[i].poolTokenBalance, tokenBalances[i].token);
     }
 
+    console.log("Exporting PendingWithdrawals contract balances to CSV");
     // Specify column headers to export
     let fields = [
         {
