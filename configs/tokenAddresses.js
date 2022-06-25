@@ -36,11 +36,6 @@ const tokenAddresses = [
         decimals: 6
     },
     {
-        symbol: "SPELL",
-        address: "0x090185f2135308BaD17527004364eBcC2D37e5F6",
-        decimals: 18
-    },
-    {
         symbol: "vBNT",
         address: "0x48Fb253446873234F2fEBbF9BdeAA72d9d387f94",
         decimals: 18
