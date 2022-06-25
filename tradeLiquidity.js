@@ -1,6 +1,7 @@
 const {Parser} = require('json2csv');
 const fs = require('fs');
 const Big = require('big.js');
+const ERC20ABI = require('erc-20-abi')
 
 const {PoolCollection, PendingWithdrawals} = require("./configs/contractInfo");
 const {tokenAddresses} = require("./configs/tokenAddresses");
@@ -210,6 +211,61 @@ async function pendingWithdrawalsTokenAmounts() {
     }
 }
 
+// Get the pending withdrawal contract balances
+async function pendingWithdrawalsPoolTokenBalances() {
+    const PendingWithdrawalsContract = "0x857Eb0Eb2572F7092C417CD386BA82e45EbA9B8a";
+    
+    let tokenBalances = [];
+
+    for (let i = 0; i < tokenAddresses.length; i ++) {
+        
+        let poolToken = (tokenAddresses[i].symbol == "BNT") ? "0xAB05Cf7C6c3a288cd36326e4f7b8600e7268E344" : await PoolCollection.methods.poolToken(tokenAddresses[i].address).call();
+
+        // Check if the pool token exists in the pool collection data
+        if (poolToken == "0x0000000000000000000000000000000000000000") {
+            tokenBalances.push({
+                token: tokenAddresses[i].address,
+                poolTokenBalance: "0",
+                poolToken: poolToken
+            })
+        } else {
+            let tokenContract = new web3.eth.Contract(ERC20ABI, poolToken);
+        
+            tokenBalances.push({
+                token: tokenAddresses[i].address,
+                poolTokenBalance: await tokenContract.methods.balanceOf(PendingWithdrawalsContract).call(),
+                poolToken: poolToken
+            })
+        }
+    }
+
+    // Process the decimal precision per token
+    for (let i = 0; i < tokenBalances.length; i++) {
+        tokenBalances[i].poolTokenBalance = processDecimals(tokenBalances[i].poolTokenBalance, tokenBalances[i].token);
+    }
+
+    // Specify column headers to export
+    let fields = [
+        {
+            label: "Base Token",
+            value: "token"
+        },
+        {
+            label: "Pool Token Balance",
+            value: "poolTokenBalance"
+        },
+        {
+            label: "Pool Token",
+            value: "poolToken"
+        }
+    ]
+
+    // Process and export to CSV
+    let csv = json2csv(tokenBalances, fields);
+    csv = replaceWithTokenSymbol(csv);
+    exportCsv(csv, exportPath.poolTokenAmountsPendingWithdrawals); 
+}
+
 // Get the pools
 async function getPools() {
     let pools = await PoolCollection.methods.pools().call();
@@ -258,6 +314,6 @@ function exportCsv(csv, path) {
     })    
 }
 
-getTotalLiquidity();
+pendingWithdrawalsPoolTokenBalances();
 
 provider.engine.stop();

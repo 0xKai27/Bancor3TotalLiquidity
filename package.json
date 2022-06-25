@@ -11,6 +11,8 @@
   "license": "ISC",
   "dependencies": {
     "@truffle/hdwallet-provider": "^2.0.9",
+    "big.js": "^6.2.0",
+    "erc-20-abi": "^1.0.0",
     "json2csv": "^5.0.7",
     "web3": "^1.7.4"
   }
