@@ -149,6 +149,21 @@ async function getTotalLiquidity() {
     }
 }
 
+// Get the staked balances directly from contract
+async function getStakedBalance() {
+    let stakedBalances = [];
+
+    for (let i = 0; i < tokenAddresses.length; i++) {
+        let stakedBalance = await BancorNetworkInfo.methods.stakedBalance(tokenAddresses[i].address).call();
+        stakedBalances.push({
+            pool: tokenAddresses[i].address,
+            stakedBalance: stakedBalance
+        })
+    }
+
+    return stakedBalances;
+}
+
 // Get the total pending withdrawals amounts by token
 async function pendingWithdrawalsTokenAmounts() {
 
@@ -317,7 +332,7 @@ async function pendingWithdrawalsPoolTokenBalances() {
 async function getPoolTradingLiquidity() {
     
     try {
-        let tradingLiquidity = []
+        let tradingLiquidity = [];
 
         for (let i = 0; i < tokenAddresses.length; i++) {
             if (tokenAddresses[i].symbol == "BNT") {
