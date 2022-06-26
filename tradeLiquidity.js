@@ -13,101 +13,75 @@ async function getTotalLiquidity() {
     console.log("Getting Bancor3 total liquidity");
 
     try {
-        let currentBlockNumber = await web3.eth.getBlockNumber();
-        let startingBlock = currentBlockNumber - 172800*3 // 172800 blocks in a month, 15s block time
-
-        const pastEvents = await PoolCollection.getPastEvents("TotalLiquidityUpdated", {
-            fromBlock: startingBlock,
-            toBlock: "latest"
-        })
-
-        let latestEvents = []
-
-        // Initialize latestEvents with the unique set of tokens 
-        pastEvents.filter((event) => {
-            var i = latestEvents.findIndex(x => (x.returnValues.pool == event.returnValues.pool));
-            if(i <= -1){
-                latestEvents.push(event);
-            }
-            return null;
-        })
-
-        // Update latest event per token
-        for (let i = 0; i < pastEvents.length; i++) {
-            for (let j = 0; j < latestEvents.length; j++) {
-                if (pastEvents[i].returnValues.pool == latestEvents[j].returnValues.pool && pastEvents[i].blockNumber > latestEvents[j].blockNumber) {
-                    latestEvents[j] = pastEvents[i];
-                }
-            }
-        }
         
         let totalLiquidity = [];
 
-        // Get the token pending withdrawal amounts
-        console.log("Getting pending withdrawal request amounts");
-        let pendingWithdrawalsAmounts = await pendingWithdrawalsTokenAmounts();
+        // Initialize the total liquidity object with base token sumbol and address
+        tokenAddresses.forEach(token => totalLiquidity.push({
+            baseTokenSymbol: token.symbol,
+            baseTokenAddress: token.address
+        }));
 
-        // Join the pending withdrawal amounts with the events object
-        for (let i = 0; i < latestEvents.length; i++) {
-            for (let j = 0; j < pendingWithdrawalsAmounts.length; j++) {
-                if (latestEvents[i].returnValues.pool == pendingWithdrawalsAmounts[j].pool) {
-                    totalLiquidity.push({
-                        blockHash: latestEvents[i].blockHash,
-                        blockNumber: latestEvents[i].blockNumber,
-                        pool: latestEvents[i].returnValues.pool,
-                        masterVaultBalances: latestEvents[i].returnValues.liquidity,
-                        stakedBalance: latestEvents[i].returnValues.stakedBalance,
-                        poolTokenSupply: latestEvents[i].returnValues.poolTokenSupply,
-                        pendingWithdrawalsPoolTokenAmount: pendingWithdrawalsAmounts[j].poolTokenAmount,
-                        pendingWithdrawalsReserveTokenAmount: pendingWithdrawalsAmounts[j].reserveTokenAmount
-                    })
-                }
+        // Get the staked balances and append to the total liquidity object
+        console.log("Getting the staked balances");
+        const stakedBalance = await getStakedBalance();
+        stakedBalance.forEach((token) => {
+            totalLiquidity[totalLiquidity.findIndex(data => data.baseTokenAddress == token.pool)].stakedBalance = token.stakedBalance;
+        })
+
+        // Get the master vault balances and append to the total liquidity object
+        console.log("Getting the master vault balances");
+        const masterVaultBalances = await getMasterVaultBalances();
+        masterVaultBalances.forEach((token) => {
+            totalLiquidity[totalLiquidity.findIndex(data => data.baseTokenAddress == token.pool)].masterVaultBalance = token.masterVaultBalance;
+        })
+
+        // Get the pool token supply and append to the total liquidity object
+        console.log("Getting the pool token supply");
+        const poolTokenSupply = await getPoolTokenSupply(); 
+        poolTokenSupply.forEach((token) => {
+            totalLiquidity[totalLiquidity.findIndex(data => data.baseTokenAddress == token.pool)].poolTokenSupply = token.poolTokenSupply;
+        })
+
+        // Get the pending withdrawals and append to the total liquidity object
+        console.log("Getting the pending withdrawal amounts");
+        const pendingWithdrawalsAmounts = await pendingWithdrawalsTokenAmounts();
+        pendingWithdrawalsAmounts.forEach((token) => {
+            if (totalLiquidity[totalLiquidity.findIndex(data => data.baseTokenAddress == token.pool)]) {
+                totalLiquidity[totalLiquidity.findIndex(data => data.baseTokenAddress == token.pool)].poolTokenPendingWithdrawals = token.poolTokenAmount;
+                totalLiquidity[totalLiquidity.findIndex(data => data.baseTokenAddress == token.pool)].reserveTokenPendingWithdrawals = token.reserveTokenAmount;
             }
-        }
-        
-        // Get the pool trading liquidity
+        })
+
+        // // Get the pool trading liquidity and append to the total liquidity object
         console.log("Getting pool trading liquidity");
-        let poolTradingLiquidity = await getPoolTradingLiquidity();
+        const poolTradingLiquidity = await getPoolTradingLiquidity();
+        poolTradingLiquidity.forEach((token) => {
+            totalLiquidity[totalLiquidity.findIndex(data => data.baseTokenAddress == token.pool)].bntTradingLiquidity = token.bntTradingLiquidity;
+            totalLiquidity[totalLiquidity.findIndex(data => data.baseTokenAddress == token.pool)].baseTokenTradingLiquidity = token.baseTokenTradingLiquidity;
+        })
 
-        // Join the total liquidity with the pool trading liquidity
-        for (let i = 0; i < totalLiquidity.length; i++) {
-            for (let j = 0; j < poolTradingLiquidity.length; j++) {
-                if (totalLiquidity[i].pool == poolTradingLiquidity[j].pool) {
-                    totalLiquidity[i].bntTradingLiquidity = poolTradingLiquidity[j].bntTradingLiquidity,
-                    totalLiquidity[i].baseTokenTradingLiquidity = poolTradingLiquidity[j].baseTokenTradingLiquidity
-                }
-            }
-        }
-
-        // Process decimal points
-        for (let i = 0; i < totalLiquidity.length; i++) {
-            totalLiquidity[i].masterVaultBalances = processDecimals(totalLiquidity[i].masterVaultBalances, totalLiquidity[i].pool);
-            totalLiquidity[i].stakedBalance = processDecimals(totalLiquidity[i].stakedBalance, totalLiquidity[i].pool);
-            totalLiquidity[i].poolTokenSupply = processDecimals(totalLiquidity[i].poolTokenSupply, totalLiquidity[i].pool);
-            totalLiquidity[i].bntTradingLiquidity = processDecimals(totalLiquidity[i].bntTradingLiquidity, "0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C"); //BNT address
-            totalLiquidity[i].baseTokenTradingLiquidity = processDecimals(totalLiquidity[i].baseTokenTradingLiquidity, totalLiquidity[i].pool);
-            totalLiquidity[i].pendingWithdrawalsPoolTokenAmount = processDecimals(totalLiquidity[i].pendingWithdrawalsPoolTokenAmount, totalLiquidity[i].pool);
-            totalLiquidity[i].pendingWithdrawalsReserveTokenAmount = processDecimals(totalLiquidity[i].pendingWithdrawalsReserveTokenAmount, totalLiquidity[i].pool);
-        }
+        // Process the decimals
+        totalLiquidity.forEach((token) => {
+            if (token.stakedBalance) {token.stakedBalance = processDecimals(token.stakedBalance, token.baseTokenAddress)};
+            if (token.masterVaultBalance) {token.masterVaultBalance = processDecimals(token.masterVaultBalance, token.baseTokenAddress)};
+            if (token.poolTokenSupply) {token.poolTokenSupply = processDecimals(token.poolTokenSupply, token.baseTokenAddress)};
+            if (token.poolTokenPendingWithdrawals) {token.poolTokenPendingWithdrawals = processDecimals(token.poolTokenPendingWithdrawals, token.baseTokenAddress)};
+            if (token.reserveTokenPendingWithdrawals) {token.reserveTokenPendingWithdrawals = processDecimals(token.reserveTokenPendingWithdrawals, token.baseTokenAddress)};
+            if (token.bntTradingLiquidity) {token.bntTradingLiquidity = processDecimals(token.bntTradingLiquidity, "0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C")}; //BNT address
+            if (token.baseTokenTradingLiquidity) {token.baseTokenTradingLiquidity = processDecimals(token.baseTokenTradingLiquidity, token.baseTokenAddress)};
+        })
 
         console.log("Exporting total liquidity to CSV");
         // Specify column headers to export to CSV
         let fields = [
-            // {
-            //     label: "Block Hash",
-            //     value: "blockHash"
-            // },
-            // {
-            //     label: "Block Number",
-            //     value: "blockNumber"
-            // },
             {
                 label: "Pool",
-                value: "pool"
+                value: "baseTokenSymbol"
             },
             {
-                label: "Master Vault Balances",
-                value: "masterVaultBalances"
+                label: "Master Vault Balance",
+                value: "masterVaultBalance"
             },
             {
                 label: "Staked Balance",
@@ -127,22 +101,21 @@ async function getTotalLiquidity() {
             },
             {
                 label: "Pool Tokens Pending Withdrawals",
-                value: "pendingWithdrawalsPoolTokenAmount"
+                value: "poolTokenPendingWithdrawals"
             },
             {
                 label: "Reserve Tokens Pending Withdrawals",
-                value: "pendingWithdrawalsReserveTokenAmount"
+                value: "reserveTokenPendingWithdrawals"
             }
         ]
 
         // Process and export to CSV
         let csv = json2csv(totalLiquidity, fields);
-        csv = replaceWithTokenSymbol(csv);
         exportCsv(csv, exportPath.tradingLiquidity);
 
         // Uncomment the below if you want to generate the pending withdrawal contract pool token balances
-        // console.log("Getting PendingWithdrawals contract balances");
-        // await pendingWithdrawalsPoolTokenBalances();  
+        console.log("Getting PendingWithdrawals contract balances");
+        await pendingWithdrawalsPoolTokenBalances();  
 
     } catch(err) {
         console.log(err)
@@ -173,16 +146,16 @@ async function getMasterVaultBalances() {
     for (let i = 0; i < tokenAddresses.length; i++) {
         if (tokenAddresses[i].symbol == "ETH") {
             balances.push({
-                token: tokenAddresses[i].address,
-                vaultBalance: await web3.eth.getBalance(masterVault)
+                pool: tokenAddresses[i].address,
+                masterVaultBalance: await web3.eth.getBalance(masterVault)
             })
         } else {
             let tokenContract = new web3.eth.Contract(ERC20ABI, tokenAddresses[i].address);
             let vaultBalance =  await tokenContract.methods.balanceOf(masterVault).call();
     
             balances.push({
-                token: tokenAddresses[i].address,
-                vaultBalance: vaultBalance
+                pool: tokenAddresses[i].address,
+                masterVaultBalance: vaultBalance
             })
         }
     }
@@ -199,7 +172,7 @@ async function getPoolTokenSupply() {
         let tokenContract = new web3.eth.Contract(ERC20ABI, poolToken);
 
         allPoolTokenSupply.push({
-            token: tokenAddresses[i].address,
+            pool: tokenAddresses[i].address,
             poolToken: "bn" + tokenAddresses[i].symbol,
             poolTokenSupply: await tokenContract.methods.totalSupply().call()
         })
@@ -266,47 +239,7 @@ async function pendingWithdrawalsTokenAmounts() {
             }
             tokenPendingWithdrawalAmounts[i].poolTokenAmount = tokenPendingWithdrawalAmounts[i].poolTokenAmount.toFixed().toString();
             tokenPendingWithdrawalAmounts[i].reserveTokenAmount = tokenPendingWithdrawalAmounts[i].reserveTokenAmount.toFixed().toString();
-        }
-
-        // Process the decimal precision per token
-        for (let i = 0; i < withdrawalRequests.length; i++) {
-            withdrawalRequests[i].returnValues.poolTokenAmount = processDecimals(withdrawalRequests[i].returnValues.poolTokenAmount, withdrawalRequests[i].returnValues.pool);
-            withdrawalRequests[i].returnValues.reserveTokenAmount = processDecimals(withdrawalRequests[i].returnValues.reserveTokenAmount, withdrawalRequests[i].returnValues.pool);
-        }
-
-        console.log("Exporting pending withdrawal requests to CSV");
-        // Specify column headers to export
-        let fields = [
-            {
-                label: "Block Hash",
-                value: "blockHash"
-            },
-            {
-                label: "Block Number",
-                value: "blockNumber"
-            },
-            {
-                label: "Pool",
-                value: "returnValues.pool"
-            },
-            {
-                label: "Provider",
-                value: "returnValues.provider"
-            },
-            {
-                label: "Pool Token Amount",
-                value: "returnValues.poolTokenAmount"
-            },
-            {
-                label: "Reserve Token Amount",
-                value: "returnValues.reserveTokenAmount"
-            }
-        ]
-
-        // Process and export to CSV
-        let csv = json2csv(withdrawalRequests, fields);
-        csv = replaceWithTokenSymbol(csv);
-        exportCsv(csv, exportPath.pendingWithdrawals);        
+        }      
 
         return tokenPendingWithdrawalAmounts;
 
@@ -443,6 +376,6 @@ function exportCsv(csv, path) {
     })    
 }
 
-getPoolTotalLiquidity();
+getTotalLiquidity();
 
 provider.engine.stop();
