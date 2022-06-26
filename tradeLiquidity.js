@@ -164,6 +164,32 @@ async function getStakedBalance() {
     return stakedBalances;
 }
 
+// Get the master vault balances
+async function getMasterVaultBalances() {
+    let balances = [];
+
+    const masterVault = await BancorNetworkInfo.methods.masterVault().call();
+
+    for (let i = 0; i < tokenAddresses.length; i++) {
+        if (tokenAddresses[i].symbol == "ETH") {
+            balances.push({
+                token: tokenAddresses[i].address,
+                vaultBalance: await web3.eth.getBalance(masterVault)
+            })
+        } else {
+            let tokenContract = new web3.eth.Contract(ERC20ABI, tokenAddresses[i].address);
+            let vaultBalance =  await tokenContract.methods.balanceOf(masterVault).call();
+    
+            balances.push({
+                token: tokenAddresses[i].address,
+                vaultBalance: vaultBalance
+            })
+        }
+    }
+
+    return balances;
+}
+
 // Get the total pending withdrawals amounts by token
 async function pendingWithdrawalsTokenAmounts() {
 
@@ -398,6 +424,6 @@ function exportCsv(csv, path) {
     })    
 }
 
-getTotalLiquidity();
+getMasterVaultBalances();
 
 provider.engine.stop();
