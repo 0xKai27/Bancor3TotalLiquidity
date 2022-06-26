@@ -190,6 +190,25 @@ async function getMasterVaultBalances() {
     return balances;
 }
 
+// Get the pool token supply
+async function getPoolTokenSupply() {
+    let allPoolTokenSupply = [];
+
+    for (let i = 0; i < tokenAddresses.length; i++) {
+        let poolToken = await BancorNetworkInfo.methods.poolToken(tokenAddresses[i].address).call();
+        let tokenContract = new web3.eth.Contract(ERC20ABI, poolToken);
+
+        allPoolTokenSupply.push({
+            token: tokenAddresses[i].address,
+            poolToken: "bn" + tokenAddresses[i].symbol,
+            poolTokenSupply: await tokenContract.methods.totalSupply().call()
+        })
+
+    }
+
+    return allPoolTokenSupply;
+}
+
 // Get the total pending withdrawals amounts by token
 async function pendingWithdrawalsTokenAmounts() {
 
@@ -424,6 +443,6 @@ function exportCsv(csv, path) {
     })    
 }
 
-getMasterVaultBalances();
+getPoolTotalLiquidity();
 
 provider.engine.stop();
