@@ -1,24 +1,19 @@
-const d = new Date();
+const time = new Date();
 
-function time() {
-    d.getTime();
+function fullDate() {
+    let fullDate = time.toISOString().slice(0, 10);
+    return fullDate;
 }
 
-function date() {
-    d.getDate();
-};
-
-function month() {
-    d.getMonth();
+function timestamp() {
+    let timestamp = time.toISOString().slice(11, 13) + time.toISOString().slice(14, 16) + time.toISOString().slice(17, 19);
+    return timestamp;
 }
 
-function year() {
-    d.getFullYear();
-}
+timestamp()
 
 module.exports = {
     time,
-    date,
-    month,
-    year
+    fullDate,
+    timestamp
 }

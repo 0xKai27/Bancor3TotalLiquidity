@@ -1,11 +1,11 @@
 const path = require('path');
 
 const exportsFolderPath = path.resolve("exports");
+const time = require("./time");
 
 // Add your local directory path here
 const exportPath = {
-    tradingLiquidity: exportsFolderPath + "/Bancor3TotalLiquidity.csv",
-    pendingWithdrawals: exportsFolderPath + "/Bancor3PendingWithdrawals.csv",
+    tradingLiquidity: `${exportsFolderPath}/${time.timestamp()}_${time.fullDate()}_Bancor3TotalLiquidity.csv`,
     poolTokenAmountsPendingWithdrawals: exportsFolderPath + "/Bancor3PoolTokenAmountsPendingWithdrawals.csv"
 }
 
