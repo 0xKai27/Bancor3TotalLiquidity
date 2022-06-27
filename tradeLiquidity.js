@@ -63,13 +63,13 @@ async function getTotalLiquidity() {
 
         // Process the decimals
         totalLiquidity.forEach((token) => {
-            if (token.stakedBalance) {token.stakedBalance = processDecimals(token.stakedBalance, token.baseTokenAddress)};
-            if (token.masterVaultBalance) {token.masterVaultBalance = processDecimals(token.masterVaultBalance, token.baseTokenAddress)};
-            if (token.poolTokenSupply) {token.poolTokenSupply = processDecimals(token.poolTokenSupply, token.baseTokenAddress)};
-            if (token.poolTokenPendingWithdrawals) {token.poolTokenPendingWithdrawals = processDecimals(token.poolTokenPendingWithdrawals, token.baseTokenAddress)};
-            if (token.reserveTokenPendingWithdrawals) {token.reserveTokenPendingWithdrawals = processDecimals(token.reserveTokenPendingWithdrawals, token.baseTokenAddress)};
-            if (token.bntTradingLiquidity) {token.bntTradingLiquidity = processDecimals(token.bntTradingLiquidity, "0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C")}; //BNT address
-            if (token.baseTokenTradingLiquidity) {token.baseTokenTradingLiquidity = processDecimals(token.baseTokenTradingLiquidity, token.baseTokenAddress)};
+            token.stakedBalance = processDecimals(token.stakedBalance, token.baseTokenAddress);
+            token.masterVaultBalance = processDecimals(token.masterVaultBalance, token.baseTokenAddress);
+            token.poolTokenSupply = processDecimals(token.poolTokenSupply, token.baseTokenAddress);
+            token.poolTokenPendingWithdrawals = processDecimals(token.poolTokenPendingWithdrawals, token.baseTokenAddress);
+            token.reserveTokenPendingWithdrawals = processDecimals(token.reserveTokenPendingWithdrawals, token.baseTokenAddress);
+            token.bntTradingLiquidity = processDecimals(token.bntTradingLiquidity, "0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C"); //BNT address
+            token.baseTokenTradingLiquidity = processDecimals(token.baseTokenTradingLiquidity, token.baseTokenAddress);
         })
 
         console.log("Exporting total liquidity to CSV");
@@ -339,7 +339,9 @@ async function getPoolTradingLiquidity() {
 function processDecimals(str, token) {
     for (let i = 0; i < tokenAddresses.length; i++) {
         if (tokenAddresses[i].address == token && tokenAddresses[i].decimals) {
-            if (str.length <= tokenAddresses[i].decimals) {
+            if (!str || new Big(str).toFixed(0) == 0) {
+                str = "-";
+            } else if (str.length <= tokenAddresses[i].decimals) {
                 str = "0." + str.padStart(tokenAddresses[i].decimals, "0");
             } else {
                 str = str.slice(0, str.length - tokenAddresses[i].decimals) + "." + str.slice(-tokenAddresses[i].decimals, str.length);
