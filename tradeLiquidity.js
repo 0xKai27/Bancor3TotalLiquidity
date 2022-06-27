@@ -4,7 +4,7 @@ const ERC20ABI = require('erc-20-abi')
 const {PoolCollection, PendingWithdrawals, BancorNetworkInfo} = require("./configs/contractInfo");
 const {tokenAddresses} = require("./configs/tokenAddresses");
 const {web3, provider} = require("./configs/web3");
-const {exportPath} = require("./configs/exportPath");
+const {exportPath} = require("./utility/exportPath");
 const CSV = require("./utility/csv");
 const Math = require("./utility/math")
 
