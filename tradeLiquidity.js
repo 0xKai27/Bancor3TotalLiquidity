@@ -335,15 +335,6 @@ async function getPoolTradingLiquidity() {
     }
 }
 
-// Replace the token addresses with the more readable token symbol
-function replaceWithTokenSymbol(str) {
-    for (let i = 0; i < tokenAddresses.length; i++) {
-        str = str.replaceAll(tokenAddresses[i].address, tokenAddresses[i].symbol);
-    }
-    return str;
-}
-
-
 getTotalLiquidity();
 
 provider.engine.stop();
