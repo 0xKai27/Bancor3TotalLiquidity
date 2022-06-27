@@ -6,6 +6,7 @@ const {tokenAddresses} = require("./configs/tokenAddresses");
 const {web3, provider} = require("./configs/web3");
 const {exportPath} = require("./configs/exportPath");
 const CSV = require("./utility/csv");
+const Math = require("./utility/math")
 
 async function getTotalLiquidity() {
 
@@ -62,13 +63,13 @@ async function getTotalLiquidity() {
 
         // Process the decimals
         totalLiquidity.forEach((token) => {
-            token.stakedBalance = processDecimals(token.stakedBalance, token.baseTokenAddress);
-            token.masterVaultBalance = processDecimals(token.masterVaultBalance, token.baseTokenAddress);
-            token.poolTokenSupply = processDecimals(token.poolTokenSupply, token.baseTokenAddress);
-            token.poolTokenPendingWithdrawals = processDecimals(token.poolTokenPendingWithdrawals, token.baseTokenAddress);
-            token.reserveTokenPendingWithdrawals = processDecimals(token.reserveTokenPendingWithdrawals, token.baseTokenAddress);
-            token.bntTradingLiquidity = processDecimals(token.bntTradingLiquidity, "0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C"); //BNT address
-            token.baseTokenTradingLiquidity = processDecimals(token.baseTokenTradingLiquidity, token.baseTokenAddress);
+            token.stakedBalance = Math.processDecimals(token.stakedBalance, token.baseTokenAddress);
+            token.masterVaultBalance = Math.processDecimals(token.masterVaultBalance, token.baseTokenAddress);
+            token.poolTokenSupply = Math.processDecimals(token.poolTokenSupply, token.baseTokenAddress);
+            token.poolTokenPendingWithdrawals = Math.processDecimals(token.poolTokenPendingWithdrawals, token.baseTokenAddress);
+            token.reserveTokenPendingWithdrawals = Math.processDecimals(token.reserveTokenPendingWithdrawals, token.baseTokenAddress);
+            token.bntTradingLiquidity = Math.processDecimals(token.bntTradingLiquidity, "0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C"); //BNT address
+            token.baseTokenTradingLiquidity = Math.processDecimals(token.baseTokenTradingLiquidity, token.baseTokenAddress);
         })
 
         console.log("Exporting total liquidity to CSV");
@@ -332,33 +333,6 @@ async function getPoolTradingLiquidity() {
     } catch (err) {
         console.log(err)
     }
-}
-
-// Process the decimals
-function processDecimals(str, token) {
-    for (let i = 0; i < tokenAddresses.length; i++) {
-        if (tokenAddresses[i].address == token && tokenAddresses[i].decimals) {
-            if (!str || new Big(str).toFixed(0) == 0) {
-                str = "-";
-            } else if (str.length <= tokenAddresses[i].decimals) {
-                str = "0." + str.padStart(tokenAddresses[i].decimals, "0");
-            } else {
-                str = str.slice(0, str.length - tokenAddresses[i].decimals) + "." + str.slice(-tokenAddresses[i].decimals, str.length);
-            }
-        }
-    }
-
-    // Change precision to 15 digits
-    if (str != "-") {
-        str = new Big(str).toPrecision(15);
-    }
-
-    // Remove trailing zeroes
-    while (str.endsWith("0")) {
-        str = str.slice(0, str.length-1);
-    }
-
-    return str;
 }
 
 // Replace the token addresses with the more readable token symbol
