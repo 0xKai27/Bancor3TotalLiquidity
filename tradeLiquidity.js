@@ -348,6 +348,16 @@ function processDecimals(str, token) {
             }
         }
     }
+
+    console.log(str);
+
+    // Remove trailing zeroes
+    while (str.endsWith("0")) {
+        str = str.slice(0, str.length-1);
+    }
+
+    console.log(str);
+
     return str;
 }
 
