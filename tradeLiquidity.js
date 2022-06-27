@@ -1,5 +1,3 @@
-const {Parser} = require('json2csv');
-const fs = require('fs');
 const Big = require('big.js');
 const ERC20ABI = require('erc-20-abi')
 
@@ -7,6 +5,7 @@ const {PoolCollection, PendingWithdrawals, BancorNetworkInfo} = require("./confi
 const {tokenAddresses} = require("./configs/tokenAddresses");
 const {web3, provider} = require("./configs/web3");
 const {exportPath} = require("./configs/exportPath");
+const CSV = require("./utility/csv");
 
 async function getTotalLiquidity() {
 
@@ -110,12 +109,12 @@ async function getTotalLiquidity() {
         ]
 
         // Process and export to CSV
-        let csv = json2csv(totalLiquidity, fields);
-        exportCsv(csv, exportPath.tradingLiquidity);
+        let csv = CSV.json2csv(totalLiquidity, fields);
+        CSV.exportCsv(csv, exportPath.tradingLiquidity);
 
         // Uncomment the below if you want to generate the pending withdrawal contract pool token balances
-        console.log("Getting PendingWithdrawals contract balances");
-        await pendingWithdrawalsPoolTokenBalances();  
+        // console.log("Getting PendingWithdrawals contract balances");
+        // await pendingWithdrawalsPoolTokenBalances();  
 
     } catch(err) {
         console.log(err)
@@ -370,24 +369,6 @@ function replaceWithTokenSymbol(str) {
     return str;
 }
 
-// Convert JSON to CSV
-function json2csv(obj, fields) {
-
-    let opts = { fields };
-    let parser = new Parser(opts)
-    let csv = parser.parse(obj, opts)
-
-    return csv;
-}
-
-// Export to local drive
-function exportCsv(csv, path) {
-    fs.writeFile(path, csv, err => {
-        if (err) {
-            console.log(err);
-        }
-    })    
-}
 
 getTotalLiquidity();
 
