@@ -61,14 +61,6 @@ async function getTotalLiquidity() {
             totalLiquidity[totalLiquidity.findIndex(data => data.baseTokenAddress == token.pool)].baseTokenTradingLiquidity = token.baseTokenTradingLiquidity;
         })
 
-        totalLiquidity.forEach((x) => {
-            console.log(x.reserveTokenPendingWithdrawals);
-            console.log(x.stakedBalance);
-            console.log(x.masterVaultBalance);
-            x.reserveTokenPendingWithdrawals = Math.mul(x.stakedBalance, x.masterVaultBalance)
-            console.log(x.reserveTokenPendingWithdrawals);
-        })
-
         // Process the decimals
         totalLiquidity.forEach((token) => {
             token.stakedBalance = Math.processDecimals(token.stakedBalance, token.baseTokenAddress);
