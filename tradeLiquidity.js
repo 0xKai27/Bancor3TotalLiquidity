@@ -53,7 +53,7 @@ async function getTotalLiquidity() {
             }
         })
 
-        // // Get the pool trading liquidity and append to the total liquidity object
+        // Get the pool trading liquidity and append to the total liquidity object
         console.log("Getting pool trading liquidity");
         const poolTradingLiquidity = await getPoolTradingLiquidity();
         poolTradingLiquidity.forEach((token) => {
@@ -61,15 +61,22 @@ async function getTotalLiquidity() {
             totalLiquidity[totalLiquidity.findIndex(data => data.baseTokenAddress == token.pool)].baseTokenTradingLiquidity = token.baseTokenTradingLiquidity;
         })
 
+        // Calculate the pool token to base token ratio and append to the total liquidity object
+        console.log("Calculating pool to base valuation ratio");
+        totalLiquidity.forEach((pool) => {
+            pool.poolToBaseValue = Math.div(pool.stakedBalance, pool.poolTokenSupply);
+        })
+
         // Process the decimals
-        totalLiquidity.forEach((token) => {
-            token.stakedBalance = Math.processDecimals(token.stakedBalance, token.baseTokenAddress);
-            token.masterVaultBalance = Math.processDecimals(token.masterVaultBalance, token.baseTokenAddress);
-            token.poolTokenSupply = Math.processDecimals(token.poolTokenSupply, token.baseTokenAddress);
-            token.poolTokenPendingWithdrawals = Math.processDecimals(token.poolTokenPendingWithdrawals, token.baseTokenAddress);
-            token.reserveTokenPendingWithdrawals = Math.processDecimals(token.reserveTokenPendingWithdrawals, token.baseTokenAddress);
-            token.bntTradingLiquidity = Math.processDecimals(token.bntTradingLiquidity, "0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C"); //BNT address
-            token.baseTokenTradingLiquidity = Math.processDecimals(token.baseTokenTradingLiquidity, token.baseTokenAddress);
+        totalLiquidity.forEach((pool) => {
+            pool.stakedBalance = Math.processDecimals(pool.stakedBalance, pool.baseTokenAddress);
+            pool.masterVaultBalance = Math.processDecimals(pool.masterVaultBalance, pool.baseTokenAddress);
+            pool.poolTokenSupply = Math.processDecimals(pool.poolTokenSupply, pool.baseTokenAddress);
+            pool.poolTokenPendingWithdrawals = Math.processDecimals(pool.poolTokenPendingWithdrawals, pool.baseTokenAddress);
+            pool.reserveTokenPendingWithdrawals = Math.processDecimals(pool.reserveTokenPendingWithdrawals, pool.baseTokenAddress);
+            pool.bntTradingLiquidity = Math.processDecimals(pool.bntTradingLiquidity, "0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C"); //BNT address
+            pool.baseTokenTradingLiquidity = Math.processDecimals(pool.baseTokenTradingLiquidity, pool.baseTokenAddress);
+            pool.poolToBaseValue = Math.processDecimals(pool.poolToBaseValue, pool.baseTokenAddress);
         })
 
         console.log("Exporting total liquidity to CSV");
@@ -106,6 +113,10 @@ async function getTotalLiquidity() {
             {
                 label: "Reserve Tokens Pending Withdrawals",
                 value: "reserveTokenPendingWithdrawals"
+            },
+            {
+                label: "bnTKN:TKN ratio",
+                value: "poolToBaseValue"
             }
         ]
 
