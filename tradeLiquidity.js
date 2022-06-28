@@ -61,10 +61,18 @@ async function getTotalLiquidity() {
             totalLiquidity[totalLiquidity.findIndex(data => data.baseTokenAddress == token.pool)].baseTokenTradingLiquidity = token.baseTokenTradingLiquidity;
         })
 
-        // Calculate the pool token to base token ratio and append to the total liquidity object
+        // Calculate the pool token to base token valuation ratio and append to the total liquidity object
         console.log("Calculating pool to base valuation ratio");
         totalLiquidity.forEach((pool) => {
             pool.poolToBaseValue = Math.div(pool.stakedBalance, pool.poolTokenSupply);
+        })
+
+        // Calculate the base token surplus/deficit and append to the total liquidity object
+        console.log("Calculating the base token surplus/deficit");
+        totalLiquidity.forEach((pool) => {
+            let totalBaseOwed = Math.mul(pool.poolTokenSupply, pool.poolToBaseValue);
+            totalBaseOwed = new Big(totalBaseOwed).toFixed(0);
+            pool.baseTokenSurplusDeficit = Math.sub(pool.masterVaultBalance, totalBaseOwed);
         })
 
         // Process the decimals
@@ -77,6 +85,7 @@ async function getTotalLiquidity() {
             pool.bntTradingLiquidity = Math.processDecimals(pool.bntTradingLiquidity, "0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C"); //BNT address
             pool.baseTokenTradingLiquidity = Math.processDecimals(pool.baseTokenTradingLiquidity, pool.baseTokenAddress);
             pool.poolToBaseValue = Math.processDecimals(pool.poolToBaseValue, pool.baseTokenAddress);
+            pool.baseTokenSurplusDeficit = Math.processDecimals(pool.baseTokenSurplusDeficit, pool.baseTokenAddress);
         })
 
         console.log("Exporting total liquidity to CSV");
@@ -115,8 +124,12 @@ async function getTotalLiquidity() {
                 value: "reserveTokenPendingWithdrawals"
             },
             {
-                label: "bnTKN:TKN ratio",
+                label: "bnTKN:TKN Value",
                 value: "poolToBaseValue"
+            },
+            {
+                label: "Base Token Surplus/Deficit",
+                value: "baseTokenSurplusDeficit"
             }
         ]
 
