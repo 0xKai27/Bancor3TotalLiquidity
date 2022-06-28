@@ -1,13 +1,13 @@
 // Specify the token contract addresses
 const tokenAddresses = [
     {
-        symbol: "LINK",
-        address: "0x514910771AF9Ca656af840dff83E8264EcF986CA",
+        symbol: "BNT",
+        address: "0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C",
         decimals: 18
     },
     {
-        symbol: "BNT",
-        address: "0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C",
+        symbol: "LINK",
+        address: "0x514910771AF9Ca656af840dff83E8264EcF986CA",
         decimals: 18
     },
     {

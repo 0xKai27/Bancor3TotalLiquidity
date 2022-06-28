@@ -17,9 +17,9 @@ async function getTotalLiquidity() {
         let totalLiquidity = [];
 
         // Initialize the total liquidity object with base token sumbol and address
-        tokenAddresses.forEach(token => totalLiquidity.push({
-            baseTokenSymbol: token.symbol,
-            baseTokenAddress: token.address
+        tokenAddresses.forEach(pool => totalLiquidity.push({
+            baseTokenSymbol: pool.symbol,
+            baseTokenAddress: pool.address
         }));
 
         // Get the staked balances and append to the total liquidity object
@@ -70,12 +70,13 @@ async function getTotalLiquidity() {
         // Calculate the base token surplus/deficit and append to the total liquidity object
         console.log("Calculating the base token surplus/deficit");
         totalLiquidity.forEach((pool) => {
-            let totalBaseOwed = Math.mul(pool.poolTokenSupply, pool.poolToBaseValue);
-            totalBaseOwed = new Big(totalBaseOwed).toFixed(0);
+            let totalBaseOwed = Math.mul(pool.poolTokenSupply, pool.poolToBaseValue);       
+            totalBaseOwed = (totalBaseOwed) ? new Big(totalBaseOwed).toFixed(0): null;
             pool.baseTokenSurplusDeficit = Math.sub(pool.masterVaultBalance, totalBaseOwed);
         })
 
         // Process the decimals
+        console.log("Processing decimals")
         totalLiquidity.forEach((pool) => {
             pool.stakedBalance = Math.processDecimals(pool.stakedBalance, pool.baseTokenAddress);
             pool.masterVaultBalance = Math.processDecimals(pool.masterVaultBalance, pool.baseTokenAddress);
