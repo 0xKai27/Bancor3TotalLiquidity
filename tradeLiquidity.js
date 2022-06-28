@@ -75,6 +75,13 @@ async function getTotalLiquidity() {
             pool.baseTokenSurplusDeficit = Math.sub(pool.masterVaultBalance, totalBaseOwed);
         })
 
+        // Calculate the implied IL (vault/staked) and append to the total liquidity object
+        console.log("Calculating the implied IL");
+        totalLiquidity.forEach((pool) => {
+            let impliedIL = Math.div(pool.masterVaultBalance, pool.stakedBalance);
+            pool.impliedIL = (impliedIL) ? new Big(impliedIL).toFixed(5): null;
+        })
+
         // Process the decimals
         console.log("Processing decimals")
         totalLiquidity.forEach((pool) => {
@@ -131,6 +138,10 @@ async function getTotalLiquidity() {
             {
                 label: "Base Token Surplus/Deficit",
                 value: "baseTokenSurplusDeficit"
+            },
+            {
+                label: "Implied IL",
+                value: "impliedIL"
             }
         ]
 
