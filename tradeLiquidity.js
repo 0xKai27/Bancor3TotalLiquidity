@@ -82,6 +82,21 @@ async function getTotalLiquidity() {
             pool.impliedIL = (impliedIL) ? new Big(impliedIL).toFixed(5): "-";
         })
 
+        // Get the full withdrawal amount for each pool
+        console.log("Getting the full withdrawal amounts");
+        for (let i = 0; i < totalLiquidity.length; i++) {
+            if (totalLiquidity[i].poolTokenSupply && totalLiquidity[i].stakedBalance != "0") {
+                let fullWithdrawal = await getFullWithdrawalAmount(totalLiquidity[i].baseTokenAddress, totalLiquidity[i].poolTokenSupply);
+                totalLiquidity[i].fullWithdrawalAmount = fullWithdrawal.totalAmount;
+                totalLiquidity[i].fullWithdrawalBaseTokenAmount = fullWithdrawal.baseTokenAmount;
+                totalLiquidity[i].fullWithdrawalBNTAmount = fullWithdrawal.bntAmount;
+                } else {
+                    totalLiquidity[i].fullWithdrawalAmount = null;
+                    totalLiquidity[i].fullWithdrawalBaseTokenAmount = null;
+                    totalLiquidity[i].fullWithdrawalBNTAmount = null;
+                }
+        } 
+
         // Process the decimals
         console.log("Processing decimals")
         totalLiquidity.forEach((pool) => {
@@ -94,6 +109,9 @@ async function getTotalLiquidity() {
             pool.baseTokenTradingLiquidity = Math.processDecimals(pool.baseTokenTradingLiquidity, pool.baseTokenAddress);
             pool.poolToBaseValue = Math.processDecimals(pool.poolToBaseValue, pool.baseTokenAddress);
             pool.baseTokenSurplusDeficit = Math.processDecimals(pool.baseTokenSurplusDeficit, pool.baseTokenAddress);
+            pool.fullWithdrawalAmount = Math.processDecimals(pool.fullWithdrawalAmount, pool.baseTokenAddress);
+            pool.fullWithdrawalBaseTokenAmount = Math.processDecimals(pool.fullWithdrawalBaseTokenAmount, pool.baseTokenAddress);
+            pool.fullWithdrawalBNTAmount = Math.processDecimals(pool.fullWithdrawalBNTAmount, "0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C")
         })
 
         console.log("Exporting total liquidity to CSV");
@@ -142,6 +160,18 @@ async function getTotalLiquidity() {
             {
                 label: "Implied IL",
                 value: "impliedIL"
+            },
+            {
+                label: "Full Withdrawal Amount",
+                value: "fullWithdrawalAmount"
+            },
+            {
+                label: "Full Withdrawal TKN Amount",
+                value: "fullWithdrawalBaseTokenAmount"
+            },
+            {
+                label: "Full Withdrawal BNT Amount",
+                value: "fullWithdrawalBNTAmount"
             }
         ]
 
@@ -369,6 +399,20 @@ async function getPoolTradingLiquidity() {
     } catch (err) {
         console.log(err)
     }
+}
+
+// Get the actual withdrawal amounts is all pool tokens were to be removed
+async function getFullWithdrawalAmount(token, amount) {
+    try {
+
+        let fullWithdrawalAmount = await BancorNetworkInfo.methods.withdrawalAmounts(token, amount).call();
+        return fullWithdrawalAmount;
+
+    } catch (err) {
+        console.log(err);
+    }
+
+    return stakedBalances;
 }
 
 getTotalLiquidity();
