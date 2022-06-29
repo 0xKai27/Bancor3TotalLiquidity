@@ -75,13 +75,6 @@ async function getTotalLiquidity() {
             pool.baseTokenSurplusDeficit = Math.sub(pool.masterVaultBalance, totalBaseOwed);
         })
 
-        // Calculate the implied IL (vault/staked) and append to the total liquidity object
-        console.log("Calculating the implied IL");
-        totalLiquidity.forEach((pool) => {
-            let impliedIL = Math.div(pool.masterVaultBalance, pool.stakedBalance);
-            pool.impliedIL = (impliedIL) ? new Big(impliedIL).toFixed(5): "-";
-        })
-
         // Get the full withdrawal amount for each pool
         console.log("Getting the full withdrawal amounts");
         for (let i = 0; i < totalLiquidity.length; i++) {
@@ -96,6 +89,19 @@ async function getTotalLiquidity() {
                     totalLiquidity[i].fullWithdrawalBNTAmount = null;
                 }
         } 
+
+        // Calculate the current IL and append to the total liquidity object
+        console.log("Calculating the implied TKN IL");
+        totalLiquidity.forEach((pool) => {
+
+            let impliedIL;
+
+            if (pool.fullWithdrawalBaseTokenAmount && pool.fullWithdrawalAmount) {
+                impliedIL = Math.div(pool.fullWithdrawalBaseTokenAmount, pool.fullWithdrawalAmount);
+            }
+
+            pool.impliedIL = (impliedIL) ? new Big(impliedIL).toFixed(5): "-";
+        })
 
         // Process the decimals
         console.log("Processing decimals")
@@ -158,10 +164,6 @@ async function getTotalLiquidity() {
                 value: "baseTokenSurplusDeficit"
             },
             {
-                label: "Implied IL",
-                value: "impliedIL"
-            },
-            {
                 label: "Full Withdrawal Amount",
                 value: "fullWithdrawalAmount"
             },
@@ -172,6 +174,10 @@ async function getTotalLiquidity() {
             {
                 label: "Full Withdrawal BNT Amount",
                 value: "fullWithdrawalBNTAmount"
+            },
+            {
+                label: "Implied TKN IL",
+                value: "impliedIL"
             }
         ]
 
