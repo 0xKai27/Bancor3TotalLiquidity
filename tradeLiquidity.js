@@ -79,7 +79,7 @@ async function getTotalLiquidity() {
         console.log("Calculating the implied IL");
         totalLiquidity.forEach((pool) => {
             let impliedIL = Math.div(pool.masterVaultBalance, pool.stakedBalance);
-            pool.impliedIL = (impliedIL) ? new Big(impliedIL).toFixed(5): null;
+            pool.impliedIL = (impliedIL) ? new Big(impliedIL).toFixed(5): "-";
         })
 
         // Process the decimals
