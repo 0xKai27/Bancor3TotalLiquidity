@@ -61,20 +61,6 @@ async function getTotalLiquidity() {
             totalLiquidity[totalLiquidity.findIndex(data => data.baseTokenAddress == token.pool)].baseTokenTradingLiquidity = token.baseTokenTradingLiquidity;
         })
 
-        // Calculate the pool token to base token valuation ratio and append to the total liquidity object
-        console.log("Calculating pool to base valuation ratio");
-        totalLiquidity.forEach((pool) => {
-            pool.poolToBaseValue = Math.div(pool.stakedBalance, pool.poolTokenSupply);
-        })
-
-        // Calculate the base token surplus/deficit and append to the total liquidity object
-        console.log("Calculating the base token surplus/deficit");
-        totalLiquidity.forEach((pool) => {
-            let totalBaseOwed = Math.mul(pool.poolTokenSupply, pool.poolToBaseValue);       
-            totalBaseOwed = (totalBaseOwed) ? new Big(totalBaseOwed).toFixed(0): null;
-            pool.baseTokenSurplusDeficit = Math.sub(pool.masterVaultBalance, totalBaseOwed);
-        })
-
         // Get the full withdrawal amount for each pool
         console.log("Getting the full withdrawal amounts");
         for (let i = 0; i < totalLiquidity.length; i++) {
@@ -103,6 +89,18 @@ async function getTotalLiquidity() {
             pool.impliedIL = (impliedIL) ? new Big(impliedIL).toFixed(5): "-";
         })
 
+        // Calculate the base token surplus/deficit and append to the total liquidity object
+        console.log("Calculating the base token surplus/deficit");
+        totalLiquidity.forEach((pool) => {
+
+            if (pool.baseTokenSymbol == "BNT") {
+                pool.baseTokenSurplusDeficit = null;
+            } else if (pool.fullWithdrawalBaseTokenAmount && pool.fullWithdrawalAmount) {
+                pool.baseTokenSurplusDeficit = Math.sub(pool.fullWithdrawalBaseTokenAmount, pool.fullWithdrawalAmount); 
+            }
+                  
+        })
+
         // Process the decimals
         console.log("Processing decimals")
         totalLiquidity.forEach((pool) => {
@@ -113,11 +111,10 @@ async function getTotalLiquidity() {
             pool.reserveTokenPendingWithdrawals = Math.processDecimals(pool.reserveTokenPendingWithdrawals, pool.baseTokenAddress);
             pool.bntTradingLiquidity = Math.processDecimals(pool.bntTradingLiquidity, "0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C"); //BNT address
             pool.baseTokenTradingLiquidity = Math.processDecimals(pool.baseTokenTradingLiquidity, pool.baseTokenAddress);
-            pool.poolToBaseValue = Math.processDecimals(pool.poolToBaseValue, pool.baseTokenAddress);
-            pool.baseTokenSurplusDeficit = Math.processDecimals(pool.baseTokenSurplusDeficit, pool.baseTokenAddress);
             pool.fullWithdrawalAmount = Math.processDecimals(pool.fullWithdrawalAmount, pool.baseTokenAddress);
             pool.fullWithdrawalBaseTokenAmount = Math.processDecimals(pool.fullWithdrawalBaseTokenAmount, pool.baseTokenAddress);
-            pool.fullWithdrawalBNTAmount = Math.processDecimals(pool.fullWithdrawalBNTAmount, "0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C")
+            pool.fullWithdrawalBNTAmount = Math.processDecimals(pool.fullWithdrawalBNTAmount, "0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C");
+            pool.baseTokenSurplusDeficit = Math.processDecimals(pool.baseTokenSurplusDeficit, pool.baseTokenAddress);
         })
 
         console.log("Exporting total liquidity to CSV");
@@ -156,14 +153,6 @@ async function getTotalLiquidity() {
                 value: "reserveTokenPendingWithdrawals"
             },
             {
-                label: "bnTKN:TKN Value",
-                value: "poolToBaseValue"
-            },
-            {
-                label: "Base Token Surplus/Deficit",
-                value: "baseTokenSurplusDeficit"
-            },
-            {
                 label: "Full Withdrawal Amount",
                 value: "fullWithdrawalAmount"
             },
@@ -178,6 +167,10 @@ async function getTotalLiquidity() {
             {
                 label: "Implied TKN IL",
                 value: "impliedIL"
+            },
+            {
+                label: "TKN Surplus/Deficit",
+                value: "baseTokenSurplusDeficit"
             }
         ]
 
