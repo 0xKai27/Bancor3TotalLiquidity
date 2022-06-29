@@ -30,8 +30,6 @@ async function getPrice() {
         let response = await fetch(`https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=${contractAddresses}&vs_currencies=usd`);
         let data = await response.json();
 
-        
-
         tokenAddresses.forEach((token) => {
             if (data[`${token.address.toLowerCase()}`]) {
                 tokenPrices.push({
@@ -45,10 +43,6 @@ async function getPrice() {
     } catch (err) {
         console.log(err);
     }
-
-
-
 }
 
-
-getPrice()
+module.exports = {getPrice}

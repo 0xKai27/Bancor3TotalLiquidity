@@ -7,6 +7,7 @@ const {web3, provider} = require("./configs/web3");
 const {exportPath} = require("./utility/exportPath");
 const CSV = require("./utility/csv");
 const Math = require("./utility/math")
+const {getPrice} = require("./configs/priceFeed");
 
 async function getTotalLiquidity() {
 
@@ -64,7 +65,7 @@ async function getTotalLiquidity() {
         // Get the full withdrawal amount for each pool
         console.log("Getting the full withdrawal amounts");
         for (let i = 0; i < totalLiquidity.length; i++) {
-            if (totalLiquidity[i].poolTokenSupply && totalLiquidity[i].stakedBalance != "0") {
+            if (totalLiquidity[i].poolTokenSupply) {
                 let fullWithdrawal = await getFullWithdrawalAmount(totalLiquidity[i].baseTokenAddress, totalLiquidity[i].poolTokenSupply);
                 totalLiquidity[i].fullWithdrawalAmount = fullWithdrawal.totalAmount;
                 totalLiquidity[i].fullWithdrawalBaseTokenAmount = fullWithdrawal.baseTokenAmount;
@@ -92,13 +93,28 @@ async function getTotalLiquidity() {
         // Calculate the base token surplus/deficit and append to the total liquidity object
         console.log("Calculating the base token surplus/deficit");
         totalLiquidity.forEach((pool) => {
-
             if (pool.baseTokenSymbol == "BNT") {
                 pool.baseTokenSurplusDeficit = null;
             } else if (pool.fullWithdrawalBaseTokenAmount && pool.fullWithdrawalAmount) {
                 pool.baseTokenSurplusDeficit = Math.sub(pool.fullWithdrawalBaseTokenAmount, pool.fullWithdrawalAmount); 
+            }                  
+        })
+
+        // Get the token prices, calculate USD surplus/deficit and append to the total liquidity object
+        console.log("Getting the token price and calculating surplus/deficit in USD");
+        let tokenPrices = await getPrice();
+        totalLiquidity.forEach((pool) => {
+            for (let i = 0; i < tokenPrices.length; i++) {
+                if (pool.baseTokenAddress == tokenPrices[i].address && pool.baseTokenSurplusDeficit && pool.baseTokenSurplusDeficit != "0") {
+
+                    let baseTokenSurplusDeficit = Math.processDecimals(pool.baseTokenSurplusDeficit, pool.baseTokenAddress)
+
+                    pool.priceInUSD = tokenPrices[i].priceInUSD
+                    pool.surplusDeficitUSD = new Big(
+                        Math.mul(tokenPrices[i].priceInUSD, baseTokenSurplusDeficit)
+                        ).toFixed(2)
+                }
             }
-                  
         })
 
         // Process the decimals
@@ -171,7 +187,15 @@ async function getTotalLiquidity() {
             {
                 label: "TKN Surplus/Deficit",
                 value: "baseTokenSurplusDeficit"
-            }
+            },
+            {
+                label: "TKN USD Price",
+                value: "priceInUSD"
+            },
+            {
+                label: "Surplus/Deficit USD",
+                value: "surplusDeficitUSD"
+            }              
         ]
 
         // Process and export to CSV
