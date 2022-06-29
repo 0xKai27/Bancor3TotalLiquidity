@@ -351,11 +351,6 @@ const tokenAddresses = [
         decimals: 18
     },
     {
-        symbol: "THALES",
-        address: "0x8947da500Eb47F82df21143D0C01A29862a8C3c5",
-        decimals: 18
-    },
-    {
         symbol: "EWTB",
         address: "0x178c820f862B14f316509ec36b13123DA19A6054",
         decimals: 18
