@@ -125,14 +125,28 @@ async function getTotalLiquidity() {
             }
         })
 
-        // Calculate the master vault TKN reesidue and append to the total liquidity object
+        // Calculate the master vault TKN residue and append to the total liquidity object
         console.log("Calculating the master vault TKN residue");
         totalLiquidity.forEach((pool) => {
             let vaultResidue = Math.sub(pool.masterVaultBalance, pool.fullWithdrawalAmount);
             if (vaultResidue) {
-                pool.vaultResidue = vaultResidue.startsWith("-") ? "-" : vaultResidue;
+                pool.vaultResidue = vaultResidue.startsWith("-") ? null : vaultResidue;
             } else {
-                pool.vaultResidue = "-";
+                pool.vaultResidue = null;
+            }
+        })
+
+        // Calculate the USD value of the master vault TKN residue and append to the total liquidity object
+        console.log("Calculating the USD value of master vault TKN residue");
+        totalLiquidity.forEach((pool) => {
+            if (pool.priceInUSD == "-" || !pool.vaultResidue || pool.vaultResidue == "0") {
+                pool.vaultResidueUSD = "-";
+            } else {
+                let vaultResidue = Math.processDecimals(pool.vaultResidue, pool.baseTokenAddress);
+
+                pool.vaultResidueUSD = new Big(
+                    Math.mul(pool.priceInUSD, vaultResidue)
+                    ).toFixed(2)
             }
         })
 
@@ -219,7 +233,11 @@ async function getTotalLiquidity() {
             {
                 label: "Vault TKN Residue",
                 value: "vaultResidue"
-            }                   
+            },
+            {
+                label: "Vault Residue USD",
+                value: "vaultResidueUSD"
+            }                        
         ]
 
         // Process and export to CSV
