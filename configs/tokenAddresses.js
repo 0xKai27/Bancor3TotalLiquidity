@@ -350,11 +350,11 @@ const tokenAddresses = [
         address: "0xae78736Cd615f374D3085123A210448E74Fc6393",
         decimals: 18
     },
-    {
-        symbol: "EWTB",
-        address: "0x178c820f862B14f316509ec36b13123DA19A6054",
-        decimals: 18
-    },
+    // {
+    //     symbol: "EWTB",
+    //     address: "0x178c820f862B14f316509ec36b13123DA19A6054",
+    //     decimals: 18
+    // },
     {
         symbol: "RPL",
         address: "0xD33526068D116cE69F19A9ee46F0bd304F21A51f",
@@ -387,4 +387,4 @@ const tokenAddresses = [
     }
 ]
 
-module.exports= {tokenAddresses};
+module.exports = {tokenAddresses};

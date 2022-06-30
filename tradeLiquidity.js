@@ -65,16 +65,16 @@ async function getTotalLiquidity() {
         // Get the full withdrawal amount for each pool
         console.log("Getting the full withdrawal amounts");
         for (let i = 0; i < totalLiquidity.length; i++) {
-            if (totalLiquidity[i].poolTokenSupply) {
+            if (totalLiquidity[i].poolTokenSupply && totalLiquidity[i].poolTokenSupply !=  "0") {
                 let fullWithdrawal = await getFullWithdrawalAmount(totalLiquidity[i].baseTokenAddress, totalLiquidity[i].poolTokenSupply);
                 totalLiquidity[i].fullWithdrawalAmount = fullWithdrawal.totalAmount;
                 totalLiquidity[i].fullWithdrawalBaseTokenAmount = fullWithdrawal.baseTokenAmount;
                 totalLiquidity[i].fullWithdrawalBNTAmount = fullWithdrawal.bntAmount;
-                } else {
-                    totalLiquidity[i].fullWithdrawalAmount = null;
-                    totalLiquidity[i].fullWithdrawalBaseTokenAmount = null;
-                    totalLiquidity[i].fullWithdrawalBNTAmount = null;
-                }
+            } else {
+                totalLiquidity[i].fullWithdrawalAmount = null;
+                totalLiquidity[i].fullWithdrawalBaseTokenAmount = null;
+                totalLiquidity[i].fullWithdrawalBNTAmount = null;
+            }
         } 
 
         // Calculate the current IL and append to the total liquidity object
@@ -94,26 +94,45 @@ async function getTotalLiquidity() {
         console.log("Calculating the base token surplus/deficit");
         totalLiquidity.forEach((pool) => {
             if (pool.baseTokenSymbol == "BNT") {
-                pool.baseTokenSurplusDeficit = null;
+                pool.baseTokenSurplusDeficit = Math.sub(pool.fullWithdrawalBNTAmount, pool.fullWithdrawalAmount);
             } else if (pool.fullWithdrawalBaseTokenAmount && pool.fullWithdrawalAmount) {
                 pool.baseTokenSurplusDeficit = Math.sub(pool.fullWithdrawalBaseTokenAmount, pool.fullWithdrawalAmount); 
             }                  
         })
 
-        // Get the token prices, calculate USD surplus/deficit and append to the total liquidity object
-        console.log("Getting the token price and calculating surplus/deficit in USD");
+        // Get the token prices and append to the total liquidity object
+        console.log("Getting the token price in USD");
         let tokenPrices = await getPrice();
         totalLiquidity.forEach((pool) => {
             for (let i = 0; i < tokenPrices.length; i++) {
-                if (pool.baseTokenAddress == tokenPrices[i].address && pool.baseTokenSurplusDeficit && pool.baseTokenSurplusDeficit != "0") {
-
-                    let baseTokenSurplusDeficit = Math.processDecimals(pool.baseTokenSurplusDeficit, pool.baseTokenAddress)
-
-                    pool.priceInUSD = tokenPrices[i].priceInUSD
-                    pool.surplusDeficitUSD = new Big(
-                        Math.mul(tokenPrices[i].priceInUSD, baseTokenSurplusDeficit)
-                        ).toFixed(2)
+                if (pool.baseTokenAddress == tokenPrices[i].address) {
+                    pool.priceInUSD = tokenPrices[i].priceInUSD ? tokenPrices[i].priceInUSD : "-";
                 }
+            }
+        })
+
+        // Calculate USD surplus/deficit and append to the total liquidity object
+        console.log("Calculating surplus/deficit in USD");
+        totalLiquidity.forEach((pool) => {
+            if (pool.priceInUSD == "-" || !pool.baseTokenSurplusDeficit || pool.baseTokenSurplusDeficit == "0") {
+                pool.surplusDeficitUSD = "-";
+            } else {
+                let baseTokenSurplusDeficit = Math.processDecimals(pool.baseTokenSurplusDeficit, pool.baseTokenAddress);
+
+                pool.surplusDeficitUSD = new Big(
+                    Math.mul(pool.priceInUSD, baseTokenSurplusDeficit)
+                    ).toFixed(2)
+            }
+        })
+
+        // Calculate the master vault TKN reesidue and append to the total liquidity object
+        console.log("Calculating the master vault TKN residue");
+        totalLiquidity.forEach((pool) => {
+            let vaultResidue = Math.sub(pool.masterVaultBalance, pool.fullWithdrawalAmount);
+            if (vaultResidue) {
+                pool.vaultResidue = vaultResidue.startsWith("-") ? "-" : vaultResidue;
+            } else {
+                pool.vaultResidue = "-";
             }
         })
 
@@ -131,6 +150,7 @@ async function getTotalLiquidity() {
             pool.fullWithdrawalBaseTokenAmount = Math.processDecimals(pool.fullWithdrawalBaseTokenAmount, pool.baseTokenAddress);
             pool.fullWithdrawalBNTAmount = Math.processDecimals(pool.fullWithdrawalBNTAmount, "0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C");
             pool.baseTokenSurplusDeficit = Math.processDecimals(pool.baseTokenSurplusDeficit, pool.baseTokenAddress);
+            pool.vaultResidue = Math.processDecimals(pool.vaultResidue, pool.baseTokenAddress);
         })
 
         console.log("Exporting total liquidity to CSV");
@@ -195,7 +215,11 @@ async function getTotalLiquidity() {
             {
                 label: "Surplus/Deficit USD",
                 value: "surplusDeficitUSD"
-            }              
+            },
+            {
+                label: "Vault TKN Residue",
+                value: "vaultResidue"
+            }                   
         ]
 
         // Process and export to CSV
@@ -434,8 +458,6 @@ async function getFullWithdrawalAmount(token, amount) {
     } catch (err) {
         console.log(err);
     }
-
-    return stakedBalances;
 }
 
 getTotalLiquidity();

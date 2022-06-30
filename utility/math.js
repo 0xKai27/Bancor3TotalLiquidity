@@ -71,9 +71,7 @@ function processDecimals(str, token) {
 
     if (isNeg) {str = str.slice(1, str.length)};
 
-    for (let i = 0; i < tokenAddresses.length; i++) {
-        
-        
+    for (let i = 0; i < tokenAddresses.length; i++) { 
         if (tokenAddresses[i].address == token && tokenAddresses[i].decimals) {
             if (!str || new Big(str) == 0) {
                 str = "-";
