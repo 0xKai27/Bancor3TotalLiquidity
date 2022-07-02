@@ -164,7 +164,6 @@ async function getTotalLiquidity() {
             pool.fullWithdrawalBaseTokenAmount = Math.processDecimals(pool.fullWithdrawalBaseTokenAmount, pool.baseTokenAddress);
             pool.fullWithdrawalBNTAmount = Math.processDecimals(pool.fullWithdrawalBNTAmount, "0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C");
             pool.baseTokenSurplusDeficit = Math.processDecimals(pool.baseTokenSurplusDeficit, pool.baseTokenAddress);
-            pool.vaultResidue = Math.processDecimals(pool.vaultResidue, pool.baseTokenAddress);
         })
 
         console.log("Exporting total liquidity to CSV");
