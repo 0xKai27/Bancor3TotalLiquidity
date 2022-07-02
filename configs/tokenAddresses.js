@@ -370,11 +370,11 @@ const tokenAddresses = [
         address: "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272",
         decimals: 18
     },
-    {
-        symbol: "DRC",
-        address: "0xa150Db9b1Fa65b44799d4dD949D922c0a33Ee606",
-        decimals: 0
-    },
+    // {
+    //     symbol: "DRC",
+    //     address: "0xa150Db9b1Fa65b44799d4dD949D922c0a33Ee606",
+    //     decimals: 0
+    // },
     {
         symbol: "FARM",
         address: "0xa0246c9032bC3A600820415aE600c6388619A14D",
